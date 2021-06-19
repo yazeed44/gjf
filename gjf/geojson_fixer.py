@@ -7,7 +7,7 @@ from shapely.validation import make_valid, explain_validity
 
 class FlipCoordinateOp(Enum):
     FLIP = 1
-    NO_FLIPPING = 2
+    NO_FLIP = 2
     FLIP_IF_ERROR = 3
 
 
@@ -94,17 +94,17 @@ def validity(geojson_obj):
     return valid_txt, valid_explain
 
 
-def apply_fixes_if_needed(geometry, flip_coords=FlipCoordinateOp.FLIP_IF_ERROR):
+def apply_fixes_if_needed(geojson_obj, flip_coords=FlipCoordinateOp.FLIP_IF_ERROR):
     # Handling Feature collection and Feature since they are not handled by Shapely
-    if geometry["type"] == "FeatureCollection":
+    if geojson_obj["type"] == "FeatureCollection":
         return {"type": "FeatureCollection",
-                "features": [apply_fixes_if_needed(feature, flip_coords) for feature in geometry["features"]]}
-    elif geometry["type"] == "Feature":
-        return {"type": "Feature", "geometry": apply_fixes_if_needed(geometry["geometry"])}
+                "features": [apply_fixes_if_needed(feature, flip_coords) for feature in geojson_obj["features"]]}
+    elif geojson_obj["type"] == "Feature":
+        return {"type": "Feature", "geometry": apply_fixes_if_needed(geojson_obj["geometry"])}
     if flip_coords == FlipCoordinateOp.FLIP or (
-            flip_coords == FlipCoordinateOp.FLIP_IF_ERROR and __should_flip_coordinate_order(geometry)):
-        geometry = flip_coordinates_order(geometry)
-    valid_shapely = __to_shapely(rewind(__to_geojson(geometry)))
+            flip_coords == FlipCoordinateOp.FLIP_IF_ERROR and __should_flip_coordinate_order(geojson_obj)):
+        geojson_obj = flip_coordinates_order(geojson_obj)
+    valid_shapely = __to_shapely(rewind(geojson_obj))
     if not valid_shapely.is_valid:
         valid_shapely = make_valid(valid_shapely)
         valid_shapely = __to_shapely(rewind(__to_geojson(valid_shapely)))
