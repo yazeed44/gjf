@@ -4,7 +4,7 @@ import geojson
 import shapely.geometry
 from geojson_rewind import rewind
 from shapely.geometry import shape, mapping
-from shapely.validation import make_valid
+from shapely.validation import make_valid, explain_validity
 
 
 class FlipCoordinateOp(Enum):
@@ -76,6 +76,24 @@ def __to_geojson(shapely_obj):
 
 def __to_shapely(geojson_obj):
     return shape(geojson_obj)
+
+
+def validity(geojson_obj):
+    if geojson_obj["type"] == "FeatureCollection":
+        collection_validity = [validity(feature) for feature in geojson_obj["features"]]
+        final_txt = "valid" if all(
+            [validity_tuple[0] == "valid" for validity_tuple in collection_validity]) else "invalid"
+        final_explain = "" if final_txt == "valid" else [validity_tuple[1] for validity_tuple in collection_validity if
+                                                         len(validity_tuple[1]) > 0]
+        return final_txt, final_explain
+
+    elif geojson_obj["type"] == "Feature":
+        return validity(geojson_obj["geometry"])
+
+    shapely_obj = __to_shapely(geojson_obj)
+    valid_txt = "valid" if shapely_obj.is_valid else "invalid"
+    valid_explain = explain_validity(shapely_obj) if not shapely_obj.is_valid else ""
+    return valid_txt, valid_explain
 
 
 def apply_fixes_if_needed(geometry, flip_coords=FlipCoordinateOp.FLIP_IF_ERROR):
