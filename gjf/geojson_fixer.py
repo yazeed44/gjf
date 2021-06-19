@@ -79,6 +79,12 @@ def __to_shapely(geojson_obj):
 
 
 def apply_fixes_if_needed(geometry, flip_coords=FlipCoordinateOp.FLIP_IF_ERROR):
+    # Handling Feature collection and Feature since they are not handled by Shapely
+    if geometry["type"] == "FeatureCollection":
+        return {"type": "FeatureCollection",
+                "features": [apply_fixes_if_needed(feature, flip_coords) for feature in geometry["features"]]}
+    elif geometry["type"] == "Feature":
+        return {"type": "Feature", "geometry": apply_fixes_if_needed(geometry["geometry"])}
     if flip_coords == FlipCoordinateOp.FLIP or (
             flip_coords == FlipCoordinateOp.FLIP_IF_ERROR and __should_flip_coordinate_order(geometry)):
         geometry = flip_coordinates_order(geometry)
