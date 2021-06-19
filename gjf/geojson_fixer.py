@@ -21,20 +21,28 @@ def __is_vertex(array):
 
 # Convert from (latitude, longitude) to (longitude, latitude) format
 # Supports any level of nesting
-def flip_coordinates_order(coords_array):
-    if __is_vertex(coords_array):
-        return [coords_array[1], coords_array[0]]
-    return [flip_coordinates_order(nested_arr) for nested_arr in coords_array]
+def flip_coordinates_order(geometry):
+    if isinstance(geometry, dict):
+        return {k: flip_coordinates_order(v) for k, v in geometry.items()}
+    elif isinstance(geometry, list):
+        return [geometry[1], geometry[0]] if __is_vertex(geometry) else [flip_coordinates_order(nested_arr) for
+                                                                         nested_arr in geometry]
+    else:
+        return geometry
 
 
-def __should_flip_coordinate_order(geometry_coordinate):
-    if not __is_vertex(geometry_coordinate):
-        return __should_flip_coordinate_order(geometry_coordinate[0])
-    elif len(geometry_coordinate) == 0:
+def __should_flip_coordinate_order(geometry):
+    if isinstance(geometry, dict):
+        return any([__should_flip_coordinate_order(v) for v in geometry.values()])
+    elif isinstance(geometry, list):
+        if not __is_vertex(geometry):
+            return any([__should_flip_coordinate_order(nested_geometry) for nested_geometry in geometry])
+    else:
         return False
-    coordinate = geometry_coordinate
+    assert len(geometry) == 2
 
-    assert len(coordinate) == 2
+    coordinate = geometry
+
     min_long, max_long = -180, 180
     min_lat, max_lat = -85, 85.05112878
 
@@ -70,17 +78,11 @@ def __to_shapely(geojson_obj):
     return shape(geojson_obj)
 
 
-# TODO handle Collections
 def apply_fixes_if_needed(geometry, flip_coords=FlipCoordinateOp.FLIP_IF_ERROR):
-    # TODO handle flipping collections coordinates
     if flip_coords == FlipCoordinateOp.FLIP or (
-            flip_coords == FlipCoordinateOp.FLIP_IF_ERROR and __should_flip_coordinate_order(geometry["coordinates"])):
-        cords = flip_coordinates_order(geometry["coordinates"])
-    else:
-        cords = geometry["coordinates"]
-    # FIXME do not assume coordinates is gonna be on the top of the hierarchy
-    cur_geojson = {"type": geometry["type"], "coordinates": cords}
-    valid_shapely = __to_shapely(cur_geojson)
+            flip_coords == FlipCoordinateOp.FLIP_IF_ERROR and __should_flip_coordinate_order(geometry)):
+        geometry = flip_coordinates_order(geometry)
+    valid_shapely = __to_shapely(geometry)
     if not valid_shapely.is_valid:
         valid_shapely = make_valid(valid_shapely)
         if isinstance(valid_shapely, shapely.geometry.Polygon) or isinstance(valid_shapely,
