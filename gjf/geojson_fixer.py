@@ -1,7 +1,5 @@
 from enum import Enum
 
-import geojson
-import shapely.geometry
 from geojson_rewind import rewind
 from shapely.geometry import shape, mapping
 from shapely.validation import make_valid, explain_validity
@@ -106,11 +104,9 @@ def apply_fixes_if_needed(geometry, flip_coords=FlipCoordinateOp.FLIP_IF_ERROR):
     if flip_coords == FlipCoordinateOp.FLIP or (
             flip_coords == FlipCoordinateOp.FLIP_IF_ERROR and __should_flip_coordinate_order(geometry)):
         geometry = flip_coordinates_order(geometry)
-    valid_shapely = __to_shapely(geometry)
+    valid_shapely = __to_shapely(rewind(__to_geojson(geometry)))
     if not valid_shapely.is_valid:
         valid_shapely = make_valid(valid_shapely)
-        if isinstance(valid_shapely, shapely.geometry.Polygon) or isinstance(valid_shapely,
-                                                                             shapely.geometry.MultiPolygon):
-            valid_shapely = __to_shapely(rewind(__to_geojson(valid_shapely)))
+        valid_shapely = __to_shapely(rewind(__to_geojson(valid_shapely)))
     assert valid_shapely.is_valid
     return __to_geojson(valid_shapely)
