@@ -79,7 +79,7 @@ def apply_fixes_if_needed(geojson_obj, flip_coords=False):
         return {"type": "Feature", "geometry": apply_fixes_if_needed(geojson_obj["geometry"])}
     if flip_coords:
         geojson_obj = flip_coordinates_order(geojson_obj)
-    valid_shapely = __to_shapely(rewind(geojson_obj))
+    valid_shapely = __to_shapely(geojson_obj)
     if not valid_shapely.is_valid:
         valid_shapely = make_valid(valid_shapely)
     if need_rewind(__to_geojson(valid_shapely)):
