@@ -76,6 +76,11 @@ def __to_shapely(geojson_obj):
     return shape(geojson_obj)
 
 
+def need_rewind(geojson_obj):
+    # If rewind is generating a different object, that means we need to rewind
+    return rewind(geojson_obj) != geojson_obj
+
+
 def validity(geojson_obj):
     if geojson_obj["type"] == "FeatureCollection":
         collection_validity = [validity(feature) for feature in geojson_obj["features"]]
@@ -89,8 +94,10 @@ def validity(geojson_obj):
         return validity(geojson_obj["geometry"])
 
     shapely_obj = __to_shapely(geojson_obj)
-    valid_txt = "valid" if shapely_obj.is_valid else "invalid"
-    valid_explain = explain_validity(shapely_obj) if not shapely_obj.is_valid else ""
+    valid_rewind_txt = "Polygons and MultiPolygons should follow the right-hand rule" if need_rewind(
+        __to_geojson(shapely_obj)) else ""
+    valid_txt = "valid" if (shapely_obj.is_valid and len(valid_rewind_txt) == 0) else "invalid"
+    valid_explain = [explain_validity(shapely_obj), valid_rewind_txt] if valid_txt == "invalid" else []
     return valid_txt, valid_explain
 
 
