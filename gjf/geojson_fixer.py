@@ -1,14 +1,6 @@
-from enum import Enum
-
 from geojson_rewind import rewind
 from shapely.geometry import shape, mapping
 from shapely.validation import make_valid, explain_validity
-
-
-class FlipCoordinateOp(Enum):
-    FLIP = 1
-    NO_FLIP = 2
-    FLIP_IF_ERROR = 3
 
 
 # TODO update to include all types of numbers, including numpy's
@@ -27,29 +19,6 @@ def flip_coordinates_order(geometry):
                                                                          nested_arr in geometry]
     else:
         return geometry
-
-
-def __should_flip_coordinate_order(geometry):
-    if isinstance(geometry, dict):
-        return any([__should_flip_coordinate_order(v) for v in geometry.values()])
-    elif isinstance(geometry, list):
-        if not __is_vertex(geometry):
-            return any([__should_flip_coordinate_order(nested_geometry) for nested_geometry in geometry])
-    else:
-        return False
-    assert len(geometry) == 2
-
-    coordinate = geometry
-
-    min_long, max_long = -180, 180
-    min_lat, max_lat = -85, 85.05112878
-
-    is_current_coordinate_valid = min_long <= coordinate[0] <= max_long and min_lat <= coordinate[1] <= max_lat
-    flipped_coordinate = [coordinate[1], coordinate[0]]
-    is_flipped_coordinate_valid = min_long <= flipped_coordinate[0] <= max_long and min_lat <= flipped_coordinate[
-        1] <= max_lat
-
-    return not is_current_coordinate_valid and is_flipped_coordinate_valid
 
 
 def __convert_tuples_of_tuples_to_list_of_lists(x):
@@ -101,15 +70,14 @@ def validity(geojson_obj):
     return valid_txt, valid_explain
 
 
-def apply_fixes_if_needed(geojson_obj, flip_coords=FlipCoordinateOp.FLIP_IF_ERROR):
+def apply_fixes_if_needed(geojson_obj, flip_coords=False):
     # Handling Feature collection and Feature since they are not handled by Shapely
     if geojson_obj["type"] == "FeatureCollection":
         return {"type": "FeatureCollection",
                 "features": [apply_fixes_if_needed(feature, flip_coords) for feature in geojson_obj["features"]]}
     elif geojson_obj["type"] == "Feature":
         return {"type": "Feature", "geometry": apply_fixes_if_needed(geojson_obj["geometry"])}
-    if flip_coords == FlipCoordinateOp.FLIP or (
-            flip_coords == FlipCoordinateOp.FLIP_IF_ERROR and __should_flip_coordinate_order(geojson_obj)):
+    if flip_coords:
         geojson_obj = flip_coordinates_order(geojson_obj)
     valid_shapely = __to_shapely(rewind(geojson_obj))
     if not valid_shapely.is_valid:
