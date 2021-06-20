@@ -1,3 +1,4 @@
+import logging
 import os
 import click
 import geojson
@@ -35,8 +36,8 @@ def handle_new_file(geojson_files, fixed_geometries, postfix="_fixed"):
               help="Choose whether to flip coordinates order. For example, from [25, 50] to [50, 25]")
 def main(geojson_files, validate, verbosity, output_method, flip):
     if verbosity:
-        logger.basicConfig(level=getattr(logger, verbosity.upper(), "NOTSET"))
-
+        logger.setLevel(level=getattr(logging, verbosity.upper(), "NOTSET"))
+    logger.debug("Started CLI with following parameters: validate: %s, verbosity: %s, output_method: %s, flip: %s", validate, verbosity, output_method, flip)
     if validate:
         click.echo(os.linesep.join([str(validity(geojson.load(file))) for file in geojson_files]))
     else:

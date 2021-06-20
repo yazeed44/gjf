@@ -1,6 +1,7 @@
 from geojson_rewind import rewind
 from shapely.geometry import shape, mapping
 from shapely.validation import make_valid, explain_validity
+from gjf import logger
 
 
 # TODO update to include all types of numbers, including numpy's
@@ -81,8 +82,10 @@ def apply_fixes_if_needed(geojson_obj, flip_coords=False):
         geojson_obj = flip_coordinates_order(geojson_obj)
     valid_shapely = __to_shapely(geojson_obj)
     if not valid_shapely.is_valid:
+        logger.info("Geometry is invalid. Will attempt to fix with make_valid")
         valid_shapely = make_valid(valid_shapely)
     if need_rewind(__to_geojson(valid_shapely)):
+        logger.info("Polygons within the geometry is not following the right-hand rule. Will attempt to fix with rewind")
         valid_shapely = __to_shapely(rewind(__to_geojson(valid_shapely)))
     assert valid_shapely.is_valid
     assert not need_rewind(__to_geojson(valid_shapely))
