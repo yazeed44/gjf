@@ -3,7 +3,7 @@ import os
 import click
 import geojson
 
-from gjf import logger
+from gjf import logger, __version__
 from gjf.geojson_fixer import validity, apply_fixes_if_needed
 
 
@@ -25,6 +25,7 @@ def handle_new_file(geojson_files, fixed_geometries, postfix="_fixed"):
 
 
 @click.command()
+@click.version_option(version=__version__)
 @click.argument("geojson-files", nargs=-1, type=click.File())
 @click.option("--validate/--fix", default=False,
               help="If --validate is triggered, the validity of the file(s) will be printed without fixing. Otherwise will attempt to fix the file ")
