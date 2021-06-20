@@ -85,4 +85,5 @@ def apply_fixes_if_needed(geojson_obj, flip_coords=False):
     if need_rewind(__to_geojson(valid_shapely)):
         valid_shapely = __to_shapely(rewind(__to_geojson(valid_shapely)))
     assert valid_shapely.is_valid
+    assert not need_rewind(__to_geojson(valid_shapely))
     return __to_geojson(valid_shapely)
