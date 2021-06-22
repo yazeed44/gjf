@@ -87,6 +87,6 @@ def apply_fixes_if_needed(geojson_obj, flip_coords=False):
     if need_rewind(__to_geojson(valid_shapely)):
         logger.info("Polygons within the geometry is not following the right-hand rule. Will attempt to fix with rewind")
         valid_shapely = __to_shapely(rewind(__to_geojson(valid_shapely)))
-    assert valid_shapely.is_valid
-    assert not need_rewind(__to_geojson(valid_shapely))
+    if not valid_shapely.is_valid or need_rewind(__to_geojson(valid_shapely)):
+        raise NotImplementedError(f"gjf is unable to fix this object. Please open a github issue to investigate")
     return __to_geojson(valid_shapely)
