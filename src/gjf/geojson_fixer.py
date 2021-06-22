@@ -74,10 +74,10 @@ def validity(geojson_obj):
 def apply_fixes_if_needed(geojson_obj, flip_coords=False):
     # Handling Feature collection and Feature since they are not handled by Shapely
     if geojson_obj["type"] == "FeatureCollection":
-        return {"type": "FeatureCollection",
+        return {**geojson_obj,
                 "features": [apply_fixes_if_needed(feature, flip_coords) for feature in geojson_obj["features"]]}
     elif geojson_obj["type"] == "Feature":
-        return {"type": "Feature", "geometry": apply_fixes_if_needed(geojson_obj["geometry"])}
+        return {**geojson_obj, "geometry": apply_fixes_if_needed(geojson_obj["geometry"])}
     if flip_coords:
         geojson_obj = flip_coordinates_order(geojson_obj)
     valid_shapely = __to_shapely(geojson_obj)
