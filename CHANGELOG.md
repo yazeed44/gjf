@@ -1,3 +1,6 @@
+# 0.1.2 (2021-06-22)
+- Fixed bug where any field other than geometry is removed from Feature
+- Raise an exception in case `gjf` is not able to fix the object
 # 0.1.1 (2021-06-20)
 - Fixed terminal not detecting `gjf` package
 
