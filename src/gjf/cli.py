@@ -9,18 +9,18 @@ from gjf.geojson_fixer import validity, apply_fixes_if_needed
 
 def handle_overwrite(geojson_files, fixed_geometries):
     file_paths = [file.name for file in geojson_files]
-    for i in range(len(file_paths)):
-        with open(file_paths[i], 'w') as f:
-            geojson.dump(fixed_geometries[i], f, ensure_ascii=False)
+    for path, geometry in zip(file_paths, fixed_geometries):
+        with open(path, 'w') as f:
+            geojson.dump(geometry, f, ensure_ascii=False)
     click.echo(os.linesep.join([f"Wrote fixes to {path}" for path in file_paths]))
 
 
 def handle_new_file(geojson_files, fixed_geometries, postfix="_fixed"):
     new_file_paths = [os.path.splitext(file.name)[0] + postfix + os.path.splitext(file.name)[-1] for file in
                       geojson_files]
-    for i in range(len(new_file_paths)):
-        with open(new_file_paths[i], 'w') as f:
-            geojson.dump(fixed_geometries[i], f, ensure_ascii=False)
+    for path, geometry in zip(new_file_paths, fixed_geometries):
+        with open(path, 'w') as f:
+            geojson.dump(geometry, f, ensure_ascii=False)
     click.echo(os.linesep.join([f"Wrote fixes to {path}" for path in new_file_paths]))
 
 
